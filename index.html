@@ -4,123 +4,107 @@
     <meta charset="utf-8">
     <title>Моя первая страница</title>
 </head>
-    
 <body>
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDIaQ9AHvRAyiXxnr1Ltgoba5LLREuJSU4",
-    authDomain: "hot4tv-8e491.firebaseapp.com",
-    databaseURL: "https://hot4tv-8e491-default-rtdb.firebaseio.com",
-    projectId: "hot4tv-8e491",
-    storageBucket: "hot4tv-8e491.firebasestorage.app",
-    messagingSenderId: "1063472164821",
-    appId: "1:1063472164821:web:daf445b54cca1e326a175c",
-    measurementId: "G-ZS96YNYM6Y"
-  };
-
-  // Initialize Firebase
- 
-  const analytics = getAnalytics(app);
-    // Инициализация Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GithubAuthProvider();
-
-// Получение элементов UI
-const loginBtn = document.getElementById("login-btn");
-const userInfoDiv = document.getElementById("user-info");
-
-// Обработчик клика для входа
-loginBtn.addEventListener("click", () => {
-  signInWithPopup(auth, provider)
-    .then((result) => {
-      // Пользователь успешно вошел
-      const user = result.user;
-      
-      // Дополнительно можно получить GitHub Access Token, если вам нужен доступ к GitHub API:
-      const credential = GithubAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
-
-      userInfoDiv.innerHTML = `
-        <h3>Добро пожаловать, ${user.displayName || 'Пользователь'}!</h3>
-        <p>Email: ${user.email}</p>
-        <img src="${user.photoURL}" alt="Avatar" width="100">
-      `;
-      console.log("Данные пользователя:", user);
-    })
-    .catch((error) => {
-      // Обработка ошибок
-      console.error("Ошибка при авторизации:", error.code, error.message);
-      userInfoDiv.innerText = `Ошибка: ${error.message}`;
-    });
-});
-
-
-
-
-    // 1. ЗАПИСЬ В БД (сохраняем профиль вошедшего пользователя)
-document.getElementById("write-btn").addEventListener("click", () => {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("Сначала авторизуйтесь!");
-    return;
-  }
-
-  // Записываем данные по пути users/UID_пользователя
-  set(ref(db, 'users/' + user.uid), {
-    username: user.displayName || "Без имени",
-    email: user.email,
-    photo: user.photoURL,
-    lastLogin: new Date().toString()
-  })
-  .then(() => {
-    alert("Данные успешно сохранены в БД!");
-  })
-  .catch((error) => {
-    console.error("Ошибка записи:", error);
-  });
-});
-
-// 2. ЧТЕНИЕ ИЗ БД
-document.getElementById("read-btn").addEventListener("click", () => {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("Сначала авторизуйтесь!");
-    return;
-  }
-
-  const dbRef = ref(db);
-  // Читаем данные из ветки users/UID_пользователя
-  get(child(dbRef, `users/${user.uid}`))
-    .then((snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        document.getElementById("db-data").textContent = JSON.stringify(data, null, 2);
-      } else {
-        document.getElementById("db-data").textContent = "Данные не найдены в БД";
-      }
-    })
-    .catch((error) => {
-      console.error("Ошибка чтения:", error);
-    });
-});
-</script>
-    <button id="write-btn">Записать в БД</button>
-<button id="read-btn">Прочитать из БД</button>
-<pre id="db-data" style="background: #f0f0f0; padding: 10px; margin-top: 10px;"></pre>
-
-    <h1>Привет, мир!</h1>
-    <p>Это моя первая простая веб-страница на HTML.</p>
+    <h1>Авторизация и база данных Firebase</h1>
     
+    <!-- Кнопка и инфо для входа через GitHub -->
+    <button id="login-btn">Войти через GitHub</button>
+    <div id="user-info" style="margin-top: 10px;"></div>
+    <hr>
+
+    <!-- Кнопки для работы с БД -->
+    <button id="write-btn">Записать в БД</button>
+    <button id="read-btn">Прочитать из БД</button>
+    <pre id="db-data" style="background: #f0f0f0; padding: 10px; margin-top: 10px;"></pre>
+    
+    <hr>
     <a href="https://developer.mozilla.org/ru/docs/Web/HTML">Учить HTML на MDN</a>
 
+    <script type="module">
+      // 1. Импортируем все необходимые функции из Firebase SDK
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+      import { getAuth, signInWithPopup, GithubAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+      // Конфигурация вашего проекта
+      const firebaseConfig = {
+        apiKey: "AIzaSyDIaQ9AHvRAyiXxnr1Ltgoba5LLREuJSU4",
+        authDomain: "hot4tv-8e491.firebaseapp.com",
+        databaseURL: "https://hot4tv-8e491-default-rtdb.firebaseio.com",
+        projectId: "hot4tv-8e491",
+        storageBucket: "hot4tv-8e491.firebasestorage.app",
+        messagingSenderId: "1063472164821",
+        appId: "1:1063472164821:web:daf445b54cca1e326a175c",
+        measurementId: "G-ZS96YNYM6Y"
+      };
+
+      // 2. Инициализируем сервисы (порядок важен!)
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const auth = getAuth(app);
+      const provider = new GithubAuthProvider();
+      const db = getDatabase(app); // Теперь база данных успешно инициализирована
+
+      // Элементы интерфейса
+      const loginBtn = document.getElementById("login-btn");
+      const userInfoDiv = document.getElementById("user-info");
+
+      // Вход через GitHub
+      loginBtn.addEventListener("click", () => {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            const user = result.user;
+            userInfoDiv.innerHTML = `
+              <h3>Добро пожаловать, ${user.displayName || 'Пользователь'}!</h3>
+              <p>Email: ${user.email}</p>
+              <img src="${user.photoURL}" alt="Avatar" width="100">
+            `;
+            console.log("Данные пользователя:", user);
+          })
+          .catch((error) => {
+            console.error("Ошибка при авторизации:", error);
+            userInfoDiv.innerText = `Ошибка: ${error.message}`;
+          });
+      });
+
+      // Запись данных в БД
+      document.getElementById("write-btn").addEventListener("click", () => {
+        const user = auth.currentUser;
+        if (!user) {
+          alert("Сначала авторизуйтесь!");
+          return;
+        }
+
+        set(ref(db, 'users/' + user.uid), {
+          username: user.displayName || "Без имени",
+          email: user.email,
+          photo: user.photoURL,
+          lastLogin: new Date().toString()
+        })
+        .then(() => alert("Данные успешно сохранены в БД!"))
+        .catch((error) => console.error("Ошибка записи:", error));
+      });
+
+      // Чтение данных из БД
+      document.getElementById("read-btn").addEventListener("click", () => {
+        const user = auth.currentUser;
+        if (!user) {
+          alert("Сначала авторизуйтесь!");
+          return;
+        }
+
+        const dbRef = ref(db);
+        get(child(dbRef, `users/${user.uid}`))
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              document.getElementById("db-data").textContent = JSON.stringify(snapshot.val(), null, 2);
+            } else {
+              document.getElementById("db-data").textContent = "Данные не найдены";
+            }
+          })
+          .catch((error) => console.error("Ошибка чтения:", error));
+      });
+    </script>
 </body>
 </html>
