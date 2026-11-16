@@ -16,7 +16,11 @@
     <button id="write-btn">Записать в БД</button>
     <button id="read-btn">Прочитать из БД</button>
     <pre id="db-data" style="background: #f0f0f0; padding: 10px; margin-top: 10px;"></pre>
-    
+    <!-- Кнопки входа и выхода -->
+<button id="login-btn">Войти через GitHub</button>
+<button id="logout-btn" style="display: none;">Выйти из аккаунта</button>
+<div id="user-info" style="margin-top: 10px;"></div>
+<hr>
     <hr>
     <a href="https://developer.mozilla.org/ru/docs/Web/HTML">Учить HTML на MDN</a>
 
@@ -24,7 +28,7 @@
       // 1. Импортируем все необходимые функции из Firebase SDK
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-      import { getAuth, signInWithPopup, GithubAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import {   getAuth, signInWithPopup, GithubAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
       import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
       // Конфигурация вашего проекта
@@ -45,6 +49,7 @@
       const auth = getAuth(app);
       const provider = new GithubAuthProvider();
       const db = getDatabase(app); // Теперь база данных успешно инициализирована
+
 
       // Элементы интерфейса
       const loginBtn = document.getElementById("login-btn");
@@ -105,6 +110,49 @@
           })
           .catch((error) => console.error("Ошибка чтения:", error));
       });
+        // Получаем новые элементы UI
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const userInfoDiv = document.getElementById("user-info");
+
+// 2. ОТСЛЕЖИВАНИЕ СОСТОЯНИЯ (автоматически управляет кнопками входа/выхода)
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Пользователь вошел: показываем кнопку выхода, скрываем кнопку входа
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    userInfoDiv.innerHTML = `
+      <h3>Добро пожаловать, ${user.displayName || 'Пользователь'}!</h3>
+      <p>Email: ${user.email}</p>
+      <img src="${user.photoURL}" alt="Avatar" width="100">
+    `;
+  } else {
+    // Пользователь вышел: показываем кнопку входа, скрываем кнопку выхода
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    userInfoDiv.innerHTML = "<p>Вы не авторизованы. Пожалуйста, войдите.</p>";
+  }
+});
+
+// 3. ОБРАБОТЧИК ВХОДА (упростили, так как UI теперь обновляется через onAuthStateChanged)
+loginBtn.addEventListener("click", () => {
+  signInWithPopup(auth, provider)
+    .catch((error) => {
+      console.error("Ошибка входа:", error);
+      alert("Ошибка входа: " + error.message);
+    });
+});
+
+// 4. ОБРАБОТЧИК ВЫХОДА
+logoutBtn.addEventListener("click", () => {
+  signOut(auth)
+    .then(() => {
+      alert("Вы успешно вышли из аккаунта!");
+    })
+    .catch((error) => {
+      console.error("Ошибка при выходе:", error);
+    });
+});
     </script>
 </body>
 </html>
